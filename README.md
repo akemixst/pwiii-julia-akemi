@@ -2,7 +2,7 @@
 
 Repositório com os projetos feitos na disciplina de **PWIII**.
 
-Reúne exercícios práticos em stacks diferentes (React, Laravel e Spring Boot), cada um em sua própria pasta.
+Reúne exercícios práticos em stacks diferentes (React, Laravel e Spring Boot), cada um em sua própria pasta, e também uma explicação dos conceitos de Spring Boot estudados ao longo da disciplina.
 
 ---
 
@@ -18,153 +18,135 @@ Reúne exercícios práticos em stacks diferentes (React, Laravel e Spring Boot)
 
 ---
 
-## 🧰 Tecnologias
+# 🌱 Criando um Projeto Java com Spring Initializr
 
-| Área | Tecnologias |
-|---|---|
-| Front-end | React, Create React App |
-| Back-end (Java) | Java 21, Spring Boot 3.3.5, Spring Web, Spring Data JPA, Bean Validation, H2, OpenFeign, OpenAPI / Swagger, Maven |
-| Back-end (PHP) | Laravel, Composer, Vite |
+O [Spring Initializr](https://start.spring.io) é o jeito mais simples de gerar a estrutura inicial de um projeto Spring Boot: tudo é feito pelo navegador, sem instalar nada.
+
+![Spring Initializr](docs/assets/spring-initializr.png)
+
+## Passo a passo
+
+1. Entre em **start.spring.io**
+2. Em **Project**, escolha Maven ou Gradle
+3. Em **Language**, escolha Java, Kotlin ou Groovy
+4. Selecione a versão do **Spring Boot**
+5. Preencha o **Project Metadata** (Group, Artifact, Package name, Packaging e Java)
+6. Clique em **ADD DEPENDENCIES** e marque as bibliotecas que o projeto vai usar
+7. Clique em **GENERATE** para baixar o projeto em `.zip`
+
+> 💡 No projeto [cliente-cnpj-api](cliente-cnpj-api) foram usados **Maven**, **Java 21** e **Spring Boot 3.3.5**, com as dependências Spring Web, Spring Data JPA, Validation, H2 e OpenFeign.
 
 ---
 
-# 🏢 Cliente CNPJ API (Spring Boot)
+## 📦 Dependências mais comuns
 
-API REST desenvolvida com Spring Boot para consumo da [BrasilAPI](https://brasilapi.com.br) (consulta de CNPJ), persistindo os dados em banco H2 e aplicando padrões de projeto (Singleton, Strategy e Facade). CRUD completo, com verbos HTTP corretos, códigos de status apropriados e tratamento de erros centralizado.
+### Lombok
+Biblioteca que diminui o código repetitivo (*boilerplate*) por meio de anotações como `@Getter`, `@Setter`, `@Data`, `@Builder` e `@AllArgsConstructor`. Os métodos que normalmente seriam escritos à mão são gerados automaticamente durante a compilação.
 
-📁 Código em [`cliente-cnpj-api`](cliente-cnpj-api)
+### Spring Web
+Módulo para criar aplicações web e APIs REST com Spring MVC. Já inclui o **Tomcat** embutido como servidor padrão, então a aplicação sobe sem precisar instalar um servidor à parte.
 
-## 🚀 Tecnologias Utilizadas
+### Spring Boot DevTools
+Ferramenta que agiliza o desenvolvimento: reinicia a aplicação sozinha quando o código muda (restart rápido) e ativa o **LiveReload** no navegador.
 
-- **Java 21**
-- **Spring Boot 3.3.5**
-- **Spring Web** e **Spring Data JPA**
-- **Bean Validation**
-- **H2 Database**
-- **OpenFeign**
-- **OpenAPI / Swagger**
-- **Maven**
+---
 
-## 🧠 Padrões de Projeto Aplicados
+## 🔧 Ferramentas de Build
 
-- **Singleton** — os serviços são beans do Spring e, por padrão, existe uma única instância de cada.
-- **Strategy** — `EmpresaStrategy` define como uma empresa é salva e atualizada (`salvar` / `atualizar`). A implementação atual é `SalvarEmpresaStrategy`, que pode ser substituída sem mexer no Facade.
-- **Facade** — `EmpresaFacade` reúne o fluxo entre Controller, Feign Client (BrasilAPI), Strategy e Repository, expondo ao Controller operações simples.
+### Maven
+Gerenciador de dependências e ferramenta de build configurada por XML (`pom.xml`). É a opção mais tradicional e madura do ecossistema Java.
 
-## 📂 Arquitetura
+### Gradle
+Alternativa mais moderna e flexível, configurada por scripts em Groovy ou Kotlin (`build.gradle` / `build.gradle.kts`). Costuma ser mais rápido que o Maven porque usa cache incremental.
 
-```mermaid
-flowchart TD
-    A[Controller] --> B[Facade]
-    B --> C[BrasilApiClient - OpenFeign]
-    B --> D[Strategy]
-    D --> E[Repository]
-    E --> F[(H2 Database)]
-    B --> G[GlobalExceptionHandler]
-```
+---
 
-## 🌐 Endpoints (CRUD completo)
+## 🗣️ Linguagens
 
-| Verbo  | Rota                | O que faz                                                | Sucesso | Erros              |
-|--------|---------------------|----------------------------------------------------------|---------|--------------------|
-| POST   | `/empresas/{cnpj}`  | Consulta a BrasilAPI e **cadastra** a empresa localmente | 201     | 400, 404, 409, 503 |
-| GET    | `/empresas/{cnpj}`  | Retorna uma empresa **já cadastrada** (não grava nada)   | 200     | 400, 404           |
-| GET    | `/empresas`         | Lista as empresas cadastradas (`?page=&size=&sort=`)     | 200     | -                  |
-| PUT    | `/empresas/{cnpj}`  | Atualiza manualmente os dados de uma empresa existente   | 200     | 400, 404           |
-| DELETE | `/empresas/{cnpj}`  | Remove uma empresa cadastrada                            | 204     | 400, 404           |
+### Kotlin
+Linguagem moderna que roda na JVM e é interoperável com Java. É mais enxuta, tem *null-safety* nativo e é oficialmente suportada pelo Google no Android. No Spring, funciona como uma alternativa ao Java com sintaxe mais concisa.
 
-> O `GET` nunca altera dados. A criação, que tem efeito colateral, só acontece pelo `POST`, seguindo a semântica do HTTP.
+---
 
-O CNPJ vale com ou sem máscara, mas como a `/` da máscara precisa ser codificada (`%2F`) na URL, o mais simples é enviar só os números. Antes de chamar a BrasilAPI, a API confere o formato e os dígitos verificadores (CNPJ alfanumérico também é aceito).
+## 🌀 Versões do Spring Boot e Snapshots
 
-**Exemplos de chamadas:**
-```
-POST   http://localhost:8080/empresas/00000000000191
-GET    http://localhost:8080/empresas/00000000000191
-GET    http://localhost:8080/empresas?page=0&size=10&sort=razaoSocial
-PUT    http://localhost:8080/empresas/00000000000191
-DELETE http://localhost:8080/empresas/00000000000191
-```
+- Versões numeradas normalmente (por exemplo `3.3.5`) são **estáveis** e indicadas para produção.
+- Versões marcadas como **SNAPSHOT** são builds em desenvolvimento, ainda instáveis, usadas para experimentar recursos que não foram lançados oficialmente. Não devem ir para produção.
 
-**Corpo do PUT** (obrigatórios: `razaoSocial`, `municipio` e `uf`):
-```json
-{
-  "razaoSocial": "BANCO DO BRASIL SA",
-  "nomeFantasia": "DIRECAO GERAL",
-  "situacaoCadastral": "ATIVA",
-  "logradouro": "SAUN QUADRA 5 LOTE B",
-  "numero": "S/N",
-  "bairro": "ASA NORTE",
-  "municipio": "BRASILIA",
-  "uf": "DF",
-  "cep": "70040912",
-  "telefone": "6134939002",
-  "email": "contato@exemplo.com.br"
-}
-```
+---
 
-**Formato das respostas de erro** (exemplo de 404):
-```json
-{
-  "timestamp": "2026-10-01T10:00:00",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Nenhuma empresa cadastrada para o CNPJ 00000000000191",
-  "path": "/empresas/00000000000191"
-}
-```
+## 🏷️ Project Metadata
 
-## ⚠️ Tratamento de Erros
+### Group
+Identifica a organização dona do projeto, no padrão de domínio invertido (por exemplo `com.example` ou `br.com`). É o "namespace raiz" do projeto.
 
-O `GlobalExceptionHandler` (`@RestControllerAdvice`) traduz cada exceção para o status HTTP correto:
+### Artifact
+Nome da aplicação em si (por exemplo `demo` ou `cliente-cnpj-api`). Dele saem o nome do arquivo final (jar/war) e o da pasta do projeto.
 
-- `CnpjInvalidoException` → **400** (formato ou dígito verificador inválido)
-- `MethodArgumentNotValidException` → **400** (corpo do PUT inválido, com a lista `details`)
-- `RecursoNaoEncontradoException` → **404** (CNPJ não cadastrado ou inexistente na BrasilAPI)
-- `EmpresaJaExisteException` → **409** (POST de um CNPJ que já existe)
-- `BrasilApiIndisponivelException` → **503** (falha ao falar com a BrasilAPI, inclusive limite de requisições)
-- Qualquer outra exceção → **500**, sem expor stacktrace ao cliente
+### Package Name
+Nome completo do pacote Java em que o código-fonte é organizado, normalmente formado por Group + Artifact (por exemplo `com.example.demo`).
 
-## 📖 Swagger e H2
+### Packaging
+Formato do arquivo gerado no build:
+- **Jar** → aplicação com servidor embutido, que roda sozinha (`java -jar app.jar`). É o padrão nas aplicações Spring Boot atuais.
+- **War** → formato tradicional, feito para ser implantado em um servidor de aplicação externo (Tomcat, JBoss etc.).
 
-- Swagger UI: `http://localhost:8080/swagger-ui.html`
-- Console do H2: `http://localhost:8080/h2-console`
-  - JDBC URL: `jdbc:h2:mem:testdb`
-  - Usuário: `sa` · Senha: (vazia)
+### Configuration
+Formato do arquivo de configuração da aplicação:
+- **Properties** → `application.properties`, no formato chave=valor, simples e direto.
+- **YAML** → `application.yml`, hierárquico (indentado), mais legível quando a configuração é grande ou aninhada.
 
-## ⚙️ Como Executar
+---
 
-É necessário ter Java 21 e Maven.
+## ☕ Versões do Java e LTS
 
-```bash
-cd cliente-cnpj-api
-mvn spring-boot:run
-```
+No Java, nem toda versão é **LTS (Long-Term Support)**:
 
-Também dá para rodar a classe `ClienteCnpjApiApplication` direto pela IDE. O `POST` precisa de internet para consultar a BrasilAPI.
+| Versão | Tipo | Observação |
+|---|---|---|
+| 17 | LTS | Suporte de longo prazo, muito usada em produção |
+| 21 | LTS | LTS estável e bastante adotada, traz as Virtual Threads (usada no projeto Cliente CNPJ API) |
+| 25 | LTS | LTS mais recente do ciclo |
+| 26 | Não-LTS | Versão de curto prazo, voltada a novidades e testes |
 
-## 🧪 Testes
+### Qual é a diferença?
 
-```bash
-cd cliente-cnpj-api
-mvn test
-```
+- **Versões LTS** recebem correções e atualizações de segurança por vários anos e são as recomendadas para produção.
+- **Versões não-LTS** (lançadas a cada 6 meses) trazem as novidades mais cedo, mas têm suporte curto. Servem para testar recursos novos, não para produção.
 
-`EmpresaControllerTest` (`@WebMvcTest` + `MockMvc`) cobre os cinco endpoints e os principais erros, e `CnpjUtilsTest` cobre a validação do CNPJ.
+---
 
-## 🔮 Próximos Passos
+## 🧩 Annotations (Anotações)
 
-- 🔐 Autenticação com Spring Security / JWT
-- 📦 Cache com Redis para evitar consultas repetidas à BrasilAPI
-- 🗃 Migração para PostgreSQL + Flyway
-- 📊 Spring Boot Actuator, logs estruturados e métricas
-- 🔗 HATEOAS nas respostas
-- 🔢 Versionamento da API (`/v1/...`)
-- 🧪 Testcontainers para testes com banco real
+Annotations são **metadados** colocados no código Java com a sintaxe `@NomeDaAnotação`. Elas não mudam a lógica do programa diretamente: servem de instrução para o compilador, para ferramentas (como o Lombok) ou, no Spring, para o **container de injeção de dependência**, que lê as anotações em tempo de execução para saber como montar e conectar os componentes da aplicação.
 
-## 🎯 Objetivo Acadêmico
+Exemplos comuns no Spring:
 
-Projeto criado para praticar padrões de projeto, integração com um web service externo, organização em camadas e boas práticas de APIs REST (verbos e status corretos, DTOs separados da entidade, erros centralizados e validação de entrada).
+| Annotation | Para que serve |
+|---|---|
+| `@SpringBootApplication` | Marca a classe principal e ativa a auto-configuração e o escaneamento de componentes |
+| `@RestController` | Declara um controlador REST, cujos métodos devolvem dados (JSON) direto no corpo da resposta |
+| `@Service` | Declara uma classe da camada de regras de negócio |
+| `@Repository` | Declara uma classe da camada de acesso a dados |
+| `@Autowired` | Pede ao Spring que injete uma dependência automaticamente |
+| `@GetMapping` / `@PostMapping` | Ligam uma rota HTTP a um método |
+
+> 💡 No projeto [cliente-cnpj-api](cliente-cnpj-api) aparecem, entre outras, `@RestController`, `@Service`, `@RestControllerAdvice` (tratamento global de erros), `@Entity` e `@FeignClient`.
+
+---
+
+## 🫘 Beans
+
+Um **Bean** é qualquer objeto **criado, gerenciado e controlado pelo Spring**, em vez de ser instanciado manualmente com `new` pelo desenvolvedor. Os beans ficam registrados no **Spring Container (ApplicationContext)**, que cria as instâncias, injeta as dependências entre elas e cuida do ciclo de vida (criação, uso e destruição).
+
+Formas mais comuns de declarar um Bean:
+
+- Anotar uma classe com `@Component`, `@Service`, `@Repository` ou `@Controller` — o Spring a encontra sozinho durante o escaneamento de componentes
+- Anotar um método com `@Bean` dentro de uma classe `@Configuration` — o valor retornado pelo método passa a ser um Bean gerenciado
+
+É isso que permite a **Injeção de Dependência (DI)**: em vez de a classe criar as próprias dependências, ela só as declara (em geral no construtor) e o Spring entrega o Bean pronto.
+
+> 💡 Por padrão cada Bean é um **Singleton**, ou seja, existe uma única instância dele no container. É o que acontece com `EmpresaFacade` e `SalvarEmpresaStrategy` no projeto Cliente CNPJ API.
 
 ---
 
